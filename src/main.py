@@ -1,11 +1,13 @@
+import lxml as lxml
 import selector as selector
 from bs4 import BeautifulSoup
 import selenium
 from selenium import webdriver
 from selenium.webdriver import Keys
+import lxml
+import time
 
 driver = webdriver.Chrome()
-import time
 driver.get("https://linkedin.com/uas/login")
 
 time.sleep(5)
@@ -19,7 +21,7 @@ time.sleep(5)
 # pword.send_keys(PASSWORD)
 # driver = webdriver.Chrome(PATH)
 
-
+#DELETE LATER
 username = driver.find_element_by_id("username")
 username.send_keys("inika.agarwal@icloud.com")
 pword = driver.find_element_by_id("password")
@@ -46,23 +48,48 @@ for linkedin_url in linkedin_urls:
     time.sleep(5)
     src = driver.page_source
     soup = BeautifulSoup(src, 'lxml')
+
+    #SCRAPING EXPERIENCE SECTION
     experience = soup.find(lambda tag:tag.name=="section" and "Experience" in tag.text).find('ul')
+
     job_titles= experience.find_all("span", {'class': 'mr1 t-bold'})
-    experience.find_all("")
     for j in job_titles:
         x = j.find("span", {'class' : 'visually-hidden'})
         job = x.get_text().strip()
         print(job)
-    driver.quit()
-    # job_titles = experience.find("span", {'class': 'mr1 t-bold'}).get_text().strip()
 
-    # company_name = li_tags.find_all("span")[1].get_text().strip()
-    # print(company_name)
-    #
-    #    joining_date = a_tags.find_all("h4")[0].find_all("span")[1].get_text().strip()
-    #
-    #    employment_duration = a_tags.find_all("h4")[1].find_all("span")[1].get_text().strip()
-    #
-    #    print(joining_date + ", " + employment_duration)
+    company_names = experience.find_all("span", {'class' : 't-14 t-normal'})
+    for c in company_names:
+        x = c.find("span", {'class' : 'visually-hidden'})
+        company = x.get_text().strip()
+        print(company)
 
+    joining_datesANDduration = experience.find_all("span", {'class': 't-14 t-normal t-black--light'})
+    var = 0
+    for j in joining_datesANDduration:
+        x = j.find("span", {'class' : 'visually-hidden'})
+        dateANDduration = x.get_text().strip()
+        if var % 2 == 0:
+            joiningdate = dateANDduration.split('-')[0]
+            jobduration = dateANDduration.split(' · ')[1]
+            print(joiningdate)
+            print(jobduration)
+        var = var + 1
 
+    #SCRAPING EDUCATION SECTION
+    studentofiitk = False
+    education = soup.find(lambda tag:tag.name=="section" and "Education" in tag.text).find('ul')
+    school =  education.find(lambda tag:tag.name=="span" and "Indian Institute of Technology, Kanpur" in tag.text)
+    # degree = education.find(lambda tag:tag.name=="span" and "Bachelor" in tag.text)
+    # print(degree)
+    print(school)
+    if school != "[ ]":
+        studentofiitk = True
+    yearsof_grad = education.find_all("span", {'class': 't-14 t-normal t-black--light'})
+    for y in yearsof_grad:
+         x = y.find("span", {'class' : 'visually-hidden'})
+         yearofschooling = x.get_text().strip()
+         yearofgrad = yearofschooling.split(' - ')[1]
+         print(yearofgrad)
+driver.quit() x = j.find("span", {'class' : 'visually-hidden'})
+        dateANDduration = x.get_text().strip()
