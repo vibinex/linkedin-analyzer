@@ -14,20 +14,15 @@ driver.get("https://linkedin.com/uas/login")
 
 time.sleep(5)
 
-# PATH = input("Enter the webdriver path:\n")
-# EMAIL = input("Enter the email:\n")
-# PASSWORD = input("Enter the password:\n")
-# username = driver.find_element_by_id("username")
-# pword = driver.find_element_by_id("password")
-# username.send_keys(EMAIL)
-# pword.send_keys(PASSWORD)
-# driver = webdriver.Chrome(PATH)
-
-#DELETE LATER
+PATH = input("Enter the webdriver path:\n")
+EMAIL = input("Enter the email:\n")
+PASSWORD = input("Enter the password:\n")
 username = driver.find_element_by_id("username")
-username.send_keys("inika.agarwal@icloud.com")
 pword = driver.find_element_by_id("password")
-pword.send_keys("Keyboard1")
+username.send_keys(EMAIL)
+pword.send_keys(PASSWORD)
+driver = webdriver.Chrome(PATH)
+
 
 log_in_button = driver.find_element_by_xpath('//*[@type="submit"]')
 log_in_button.click()
@@ -78,7 +73,6 @@ for linkedin_url in linkedin_urls:
     jobsduration = []
     joiningdates = []
     leavingdates = []
-
     driver.get('https://www.linkedin.com/in/pragyajain73/?originalSubdomain=in')
     time.sleep(5)
     src = driver.page_source
