@@ -214,15 +214,6 @@ def extracting_from_education_section_from_profile(soup,dict):
             degrees.append(' ')
 
 
-    for n in range(len(dict['Job Titles'])- len(degrees)):
-        degrees.append(' ')
-        colleges.append(' ')
-        colleges_year_of_joining.append(' ')
-        colleges_duration.append(' ')
-        colleges_year_of_grad.append(' ')
-
-
-
     dict['Degree Names']= degrees
     dict['School Names'] = colleges
     dict['School Duration'] = colleges_duration
@@ -238,13 +229,13 @@ def gettingDataFromProfiles():
 
     iitk_id = 157268
 
-    linkedin_urls = []
+    linkedin_urls = ['https://www.linkedin.com/in/vibhor-kumar-talreja-b872a310/']
 
     logging_in(driver)
-    getting_urls_and_clicking_next_page(iitk_id,driver,linkedin_urls)
-    print(len(linkedin_urls))
+    # getting_urls_and_clicking_next_page(iitk_id,driver,linkedin_urls)
 
-    all_profiles_linkedin_data = {}
+    all_experience_data = {'User id': None, 'Names':None, 'Job Titles': None, 'Companies': None, 'Job Duration': None , 'Job Joining Dates': None, 'Job Leaving Dates': None}
+    all_education_data = {'User id': None, 'Names': None,'School Names': None, 'Degree Names': None, 'School Joining Dates': None, 'School Leaving Dates': None, 'School Duration': None}
 
     for linkedin_url in linkedin_urls:
 
@@ -255,19 +246,33 @@ def gettingDataFromProfiles():
 
 
         try:
-
-            profile_experience_and_education_data = {'Job Titles': None, 'Companies': None, 'Job Duration': None , 'Job Joining Dates': None, 'Job Leaving Dates': None,'School Names': None, 'Degree Names': None, 'School Joining Dates': None, 'School Leaving Dates': None, 'School Duration': None}
-
-            extracting_from_experience_section_from_profile(soup,driver,profile_experience_and_education_data)
-
-            extracting_from_education_section_from_profile(soup,profile_experience_and_education_data)
-
+            names = []
+            users_id = []
+            userid = linkedin_url.split('in/')[1].split('/')[0]
             name = extracting_from_personal_info_section_from_profile(soup)
+
+            extracting_from_experience_section_from_profile(soup,driver,all_experience_data)
+            extracting_from_education_section_from_profile(soup,all_education_data)
+
+            for i in range(len(all_experience_data['Job Titles'])):
+                names.append(name)
+                users_id.append(userid)
+
+            all_experience_data['Names'] = names
+            all_experience_data['User id'] = users_id
+
+            for i in range(len(all_education_data['School Names'])):
+                names.append(name)
+                users_id.append(userid)
+
+            all_education_data['Names'] = names
+            all_education_data['User id'] = users_id
 
 
         except:
 
             print('error' + linkedin_url)
+
 
     driver.quit()
 
