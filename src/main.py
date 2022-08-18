@@ -33,7 +33,7 @@ def getting_profile_urls(schoolid,driver,urls):
     filter_urls = filter_soup.find('main', {'id':'main'}).find('ul').find_all('li')
 
     for filter_url in filter_urls:
-        if filter_url.find('div', {'class' : 't-roman t-sans'}).find('a')['href'] != 'https://www.linkedin.com/search/results/people/headless/?schoolFilter=%5B' + str(schoolid) + '%5D&origin=FACETED_SEARCH':
+        if filter_url.find('div', {'class' : 't-roman t-sans'}).find('a')['href'] != 'https://www.linkedin.com/search/results/people/headless?schoolFilter=%5B' + str(schoolid) + '%5D&origin=FACETED_SEARCH':
             urls.append(filter_url.find('div', {'class' : 't-roman t-sans'}).find('a')['href'])
 
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -44,6 +44,7 @@ def getting_urls_and_clicking_next_page(schoolid,driver,urls):
     driver.get('https://www.linkedin.com/search/results/people/?origin=FACETED_SEARCH&schoolFilter=%5B%22' + str(schoolid) + '%22%5D&sid=(X1')
     driver.implicitly_wait(5)
     loop = True
+    count = 0
     while loop:
         getting_profile_urls(schoolid,driver,urls)
 
@@ -52,10 +53,14 @@ def getting_urls_and_clicking_next_page(schoolid,driver,urls):
         next_button = driver.find_element_by_xpath('//button[@type="button" and @aria-label="Next"]')
         next_button.click()
         time.sleep(3)
+        count = count + 1
 
         if driver.current_url == old_url:
             loop = False
             print('All links obtained.')
+        elif count == 1:
+            loop = False
+
 
 def remove_full_time(text,format_type):
     if len(text.split(' · ')) > 1:
@@ -80,7 +85,7 @@ def extracting_from_personal_info_section_from_profile(soup):
     return soup.find('h1', {'class':'text-heading-xlarge inline t-24 v-align-middle break-words'}).get_text().strip()
 
 
-def extracting_from_experience_section_from_profile(soup,driver,dict):
+def extracting_from_experience_section_from_profile(soup,driver,dict,person_no,num_job):
     companies = []
     jobs = []
     jobs_duration = []
@@ -161,14 +166,23 @@ def extracting_from_experience_section_from_profile(soup,driver,dict):
             job_duration = remove_full_time(job_duration,'format2')
             jobs_duration.append(job_duration)
 
-    dict['Job Titles']= jobs
-    dict['Companies'] = companies
-    dict['Job Duration'] = jobs_duration
-    dict['Job Joining Dates'] = joining_dates
-    dict['Job Leaving Dates'] = leaving_dates
+    if person_no > 1:
+        dict['Job Titles'].extend(jobs)
+        dict['Companies'].extend(companies)
+        dict['Job Duration'].extend(jobs_duration)
+        dict['Job Joining Dates'].extend(joining_dates)
+        dict['Job Leaving Dates'].extend(leaving_dates)
+    else:
+        dict['Job Titles'] = jobs
+        dict['Companies'] = companies
+        dict['Job Duration'] = jobs_duration
+        dict['Job Joining Dates']= joining_dates
+        dict['Job Leaving Dates'] = leaving_dates
+
+    num_job.append(len(jobs))
 
 
-def extracting_from_education_section_from_profile(soup,dict):
+def extracting_from_education_section_from_profile(soup,dict,person_no,num_degree):
     colleges_year_of_grad = []
     colleges = []
     degrees = []
@@ -213,30 +227,37 @@ def extracting_from_education_section_from_profile(soup,dict):
         else:
             degrees.append(' ')
 
+    if person_no > 1:
+        dict['Degree Names'].extend(degrees)
+        dict['School Names'].extend(colleges)
+        dict['School Duration'].extend(colleges_duration)
+        dict['School Joining Dates'].extend(colleges_year_of_joining)
+        dict['School Leaving Dates'].extend(colleges_year_of_grad)
+    else:
+        dict['Degree Names'] = degrees
+        dict['School Names'] = colleges
+        dict['School Duration'] = colleges_duration
+        dict['School Joining Dates'] = colleges_year_of_joining
+        dict['School Leaving Dates'] = colleges_year_of_grad
 
-    dict['Degree Names']= degrees
-    dict['School Names'] = colleges
-    dict['School Duration'] = colleges_duration
-    dict['School Joining Dates'] = colleges_year_of_joining
-    dict['School Leaving Dates'] = colleges_year_of_grad
-
+    num_degree.append(len(degrees))
 
 def gettingDataFromProfiles():
 
-    PATH = input("Enter the webdriver path:\n")
     driver = webdriver.Chrome()
     driver.implicitly_wait(5)
 
     iitk_id = 157268
 
-    linkedin_urls = ['https://www.linkedin.com/in/vibhor-kumar-talreja-b872a310/']
+    linkedin_urls = []
 
     logging_in(driver)
-    # getting_urls_and_clicking_next_page(iitk_id,driver,linkedin_urls)
+    getting_urls_and_clicking_next_page(iitk_id,driver,linkedin_urls)
 
     all_experience_data = {'User id': None, 'Names':None, 'Job Titles': None, 'Companies': None, 'Job Duration': None , 'Job Joining Dates': None, 'Job Leaving Dates': None}
     all_education_data = {'User id': None, 'Names': None,'School Names': None, 'Degree Names': None, 'School Joining Dates': None, 'School Leaving Dates': None, 'School Duration': None}
 
+    person_num = 1
     for linkedin_url in linkedin_urls:
 
         driver.get(linkedin_url)
@@ -245,40 +266,66 @@ def gettingDataFromProfiles():
         soup = BeautifulSoup(src, 'html.parser')
 
 
-        try:
-            names = []
-            users_id = []
-            userid = linkedin_url.split('in/')[1].split('/')[0]
-            name = extracting_from_personal_info_section_from_profile(soup)
+        # try:
+        names = []
+        users_id = []
+        userid = linkedin_url.split('in/')[1].split('/')[0]
+        name = extracting_from_personal_info_section_from_profile(soup)
 
-            extracting_from_experience_section_from_profile(soup,driver,all_experience_data)
-            extracting_from_education_section_from_profile(soup,all_education_data)
+        num_jobs = []
+        num_degrees = []
 
-            for i in range(len(all_experience_data['Job Titles'])):
-                names.append(name)
-                users_id.append(userid)
 
+        extracting_from_experience_section_from_profile(soup,driver,all_experience_data,person_num,num_jobs)
+        extracting_from_education_section_from_profile(soup,all_education_data,person_num,num_degrees)
+
+        for i in range(num_jobs):
+            names.append(name)
+            users_id.append(userid)
+
+        if person_num > 1:
+            all_experience_data['Names'].extend(names)
+            all_experience_data['User id'].extend(users_id)
+        else:
             all_experience_data['Names'] = names
             all_experience_data['User id'] = users_id
 
-            for i in range(len(all_education_data['School Names'])):
-                names.append(name)
-                users_id.append(userid)
+        names = []
+        users_id = []
 
+        for i in range(num_degrees):
+            names.append(name)
+            users_id.append(userid)
+
+        if person_num > 1:
+            all_education_data['Names'].extend(names)
+            all_education_data['User id'].extend(users_id)
+        else:
             all_education_data['Names'] = names
             all_education_data['User id'] = users_id
 
+        person_num = person_num + 1
 
-        except:
 
-            print('error' + linkedin_url)
+
+
+        # except:
+
+            # print('error: ' + linkedin_url)
 
 
     driver.quit()
 
+    experience_df = pandas.DataFrame(data=all_experience_data)
+    education_df = pandas.DataFrame(data=all_education_data)
+    print(experience_df)
+    print(education_df)
+
+
 
 def main():
    gettingDataFromProfiles()
+
 
 
 main()
