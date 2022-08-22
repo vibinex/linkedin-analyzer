@@ -1,258 +1,29 @@
-import selector as selector
 from bs4 import BeautifulSoup
 import selenium
 from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
 from selenium.webdriver import Keys
 import lxml
-import time
 import pandas
 import datetime
 
+import logging_in_and_getting_profile_links
+import getting_data_from_a_profile
 
 
 
-def logging_in(driver):
-
-    driver.get("https://linkedin.com/uas/login")
-
-
-    EMAIL = input("Enter the email:\n")
-    username = driver.find_element_by_id("username")
-    pword = driver.find_element_by_id("password")
-    PASSWORD = input("Enter the password:\n")
-    username.send_keys(EMAIL)
-    pword.send_keys(PASSWORD)
-
-    log_in_button = driver.find_element_by_xpath('//*[@type="submit"]')
-    log_in_button.click()
-
-
-def getting_profile_urls(schoolid,driver,urls):
-    filter_src = driver.page_source
-    filter_soup = BeautifulSoup(filter_src, 'html.parser')
-    filter_urls = filter_soup.find('main', {'id':'main'}).find('ul').find_all('li')
-
-    for filter_url in filter_urls:
-        if filter_url.find('div', {'class' : 't-roman t-sans'}).find('a')['href'] != 'https://www.linkedin.com/search/results/people/headless?schoolFilter=%5B' + str(schoolid) + '%5D&origin=FACETED_SEARCH':
-            urls.append(filter_url.find('div', {'class' : 't-roman t-sans'}).find('a')['href'])
-
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(3)
-
-
-def getting_urls_and_clicking_next_page(schoolid,driver,urls):
-    driver.get('https://www.linkedin.com/search/results/people/?origin=FACETED_SEARCH&schoolFilter=%5B%22' + str(schoolid) + '%22%5D&sid=(X1')
-    driver.implicitly_wait(5)
-    loop = True
-    count = 0
-    while loop:
-        getting_profile_urls(schoolid,driver,urls)
-
-        old_url = driver.current_url
-
-        next_button = driver.find_element_by_xpath('//button[@type="button" and @aria-label="Next"]')
-        next_button.click()
-        time.sleep(3)
-        count = count + 1
-
-        if driver.current_url == old_url:
-            loop = False
-            print('All links obtained.')
-        elif count == 1:
-            loop = False
-
-
-def remove_full_time(text,format_type):
-    if len(text.split(' · ')) > 1:
-        if format_type == 'format1':
-            return text.split(' · ')[0]
-        else:
-            return text.split(' · ')[1]
-    else:
-        return text
-
-
-def converting_date(date):
-    if len(date.split()) == 1:
-        return datetime.datetime(int(date),7,1)
-    else:
-        month = date.split()[0]
-        datetime_object = datetime.datetime.strptime(month, "%b")
-        return datetime.datetime(int(date.split()[1]),datetime_object.month,1)
-
-
-def extracting_from_personal_info_section_from_profile(soup):
-    return soup.find('h1', {'class':'text-heading-xlarge inline t-24 v-align-middle break-words'}).get_text().strip()
-
-
-def extracting_from_experience_section_from_profile(soup,driver,dict,person_no,num_job):
-    companies = []
-    jobs = []
-    jobs_duration = []
-    joining_dates = []
-    leaving_dates = []
-
-    for s in soup.find_all('section'):
-        if s.find('div', {'id' : 'experience'}) != None:
-            experience_check = s
-
-    if experience_check.find('div', {'class' : 'pvs-list__footer-wrapper'}) != None:
-        experience_page = experience_check.find('div', {'class' : 'pvs-list__footer-wrapper'}).find('a')
-        link = experience_page['href']
-        driver.get(link)
-        time.sleep(5)
-        experience_src = driver.page_source
-        experience_soup = BeautifulSoup(experience_src, 'html.parser')
-        experience = experience_soup.find('main').find('section').find('ul')
-        format_checks = experience.find_all('li', {'class':'pvs-list__paged-list-item artdeco-list__item pvs-list__item--line-separated'})
-    else:
-        experience = experience_check.find('ul')
-        format_checks = experience.find_all('li', {'class':'artdeco-list__item pvs-list__item--line-separated pvs-list__item--one-column'})
-
-    for format_check in format_checks:
-        if (format_check.find('div', {'class' : 'display-flex flex-row justify-space-between'})).find('a') == None:
-            job_titles= format_check.find_all("span", {'class': 'mr1 t-bold'})
-            for j in job_titles:
-                job = j.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-                jobs.append(job)
-
-            company_names = format_check.find_all("span", {'class' : 't-14 t-normal'})
-            for c in company_names:
-                company = c.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-                company = remove_full_time(company,'format1')
-                companies.append(company)
-
-            joining_dates_and_duration = format_check.find_all("span", {'class': 't-14 t-normal t-black--light'})[0]
-            date_and_duration = joining_dates_and_duration.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            if len(date_and_duration.split(' - ')) == 1:
-                joining_date = date_and_duration.split(' · ')[0]
-                leaving_date = date_and_duration.split(' · ')[0]
-            else:
-                joining_date = date_and_duration.split(' - ')[0]
-                leaving_date = (date_and_duration.split(' - ')[1]).split(' · ')[0]
-
-            job_duration = date_and_duration.split(' · ')[1]
-
-            joining_dates.append(joining_date)
-            jobs_duration.append(job_duration)
-            leaving_dates.append(leaving_date)
-
-        else:
-            no_of_jobs = len(format_check.find_all('span', {'class': 'mr1 hoverable-link-text t-bold'})) - 1
-            job_titles = format_check.find_all('span', {'class': 'mr1 hoverable-link-text t-bold'})[no_of_jobs]
-            job = job_titles.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            jobs.append(job)
-
-            company_titles = format_check.find_all('span', {'class': 'mr1 hoverable-link-text t-bold'})[0]
-            company = company_titles.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            companies.append(company)
-
-
-            leaving_date_titles = format_check.find('ul').find_all("span", {'class': 't-14 t-normal t-black--light'})[0]
-            leaving_date_temp = leaving_date_titles.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            leaving_date = (leaving_date_temp.split(' - ')[1]).split(' · ')[0]
-            leaving_dates.append(leaving_date)
-
-            joining_date_temps = []
-            for l in format_check.find_all('li'):
-                joining_date_temp = l.find_all("span", {'class': 't-14 t-normal t-black--light'})
-                if joining_date_temp != []:
-                    joining_date_temps.append(joining_date_temp[0])
-            joining_date = joining_date_temps[no_of_jobs-1].get_text().strip().split(' - ')[0]
-            joining_dates.append(joining_date)
-
-            job_duration_titles = format_check.find_all("span", {'class': 't-14 t-normal'})[0]
-            job_duration = job_duration_titles.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            job_duration = remove_full_time(job_duration,'format2')
-            jobs_duration.append(job_duration)
-
-    if person_no > 1:
-        dict['Job Titles'].extend(jobs)
-        dict['Companies'].extend(companies)
-        dict['Job Duration'].extend(jobs_duration)
-        dict['Job Joining Dates'].extend(joining_dates)
-        dict['Job Leaving Dates'].extend(leaving_dates)
-    else:
-        dict['Job Titles'] = jobs
-        dict['Companies'] = companies
-        dict['Job Duration'] = jobs_duration
-        dict['Job Joining Dates']= joining_dates
-        dict['Job Leaving Dates'] = leaving_dates
-
-    num_job.append(len(jobs))
-
-
-def extracting_from_education_section_from_profile(soup,dict,person_no,num_degree):
-    colleges_year_of_grad = []
-    colleges = []
-    degrees = []
-    colleges_year_of_joining = []
-    colleges_duration = []
-
-    for s in soup.find_all('section'):
-            if s.find('div', {'id' : 'education'}) != None:
-                education = s.find('ul')
-
-    school_sections = education.find_all('li', {'class':'artdeco-list__item pvs-list__item--line-separated pvs-list__item--one-column'})
-
-    for school_section in school_sections:
-        years_of_schooling = school_section.find("span", {'class': 't-14 t-normal t-black--light'})
-        year_of_schooling = years_of_schooling.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-
-        college_year_of_join = year_of_schooling.split(' - ')[0]
-
-        if len(college_year_of_join.split()) > 1:
-            college_year_of_join = college_year_of_join.split()[1]
-
-        college_year_of_grad = year_of_schooling.split(' - ')[1]
-
-        if len(college_year_of_grad.split()) > 1:
-            college_year_of_grad = college_year_of_grad.split()[1]
-
-        colleges_year_of_grad.append(college_year_of_grad)
-        colleges_year_of_joining.append(college_year_of_join)
-
-
-        college_duration = int(college_year_of_grad)-int(college_year_of_join)
-        colleges_duration.append(college_duration)
-
-        college_names = school_section.find('span', {'class':'mr1 hoverable-link-text t-bold'})
-        college = college_names.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-        colleges.append(college)
-
-        degree_names = school_section.find('span', {'class':'t-14 t-normal'})
-        if degree_names != None:
-            degree = degree_names.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            degrees.append(degree)
-        else:
-            degrees.append(' ')
-
-    if person_no > 1:
-        dict['Degree Names'].extend(degrees)
-        dict['School Names'].extend(colleges)
-        dict['School Duration'].extend(colleges_duration)
-        dict['School Joining Dates'].extend(colleges_year_of_joining)
-        dict['School Leaving Dates'].extend(colleges_year_of_grad)
-    else:
-        dict['Degree Names'] = degrees
-        dict['School Names'] = colleges
-        dict['School Duration'] = colleges_duration
-        dict['School Joining Dates'] = colleges_year_of_joining
-        dict['School Leaving Dates'] = colleges_year_of_grad
-
-    num_degree.append(len(degrees))
-
-def gettingDataFromProfiles():
+def getting_data_from_profiles():
 
     driver = webdriver.Chrome()
-    driver.implicitly_wait(5)
 
     iitk_id = 157268
 
     linkedin_urls = []
 
-    logging_in(driver)
-    getting_urls_and_clicking_next_page(iitk_id,driver,linkedin_urls)
+    logging_in_and_getting_profile_links.logging_in(driver)
+    logging_in_and_getting_profile_links.getting_urls_and_clicking_next_page(iitk_id, driver, linkedin_urls)
 
     all_experience_data = {'User id': None, 'Names':None, 'Job Titles': None, 'Companies': None, 'Job Duration': None , 'Job Joining Dates': None, 'Job Leaving Dates': None}
     all_education_data = {'User id': None, 'Names': None,'School Names': None, 'Degree Names': None, 'School Joining Dates': None, 'School Leaving Dates': None, 'School Duration': None}
@@ -261,7 +32,7 @@ def gettingDataFromProfiles():
     for linkedin_url in linkedin_urls:
 
         driver.get(linkedin_url)
-        time.sleep(5)
+        WebDriverWait(driver,30).until(EC.presence_of_element_located((By.ID, "experience")))
         src = driver.page_source
         soup = BeautifulSoup(src, 'html.parser')
 
@@ -269,17 +40,17 @@ def gettingDataFromProfiles():
         # try:
         names = []
         users_id = []
-        userid = linkedin_url.split('in/')[1].split('/')[0]
-        name = extracting_from_personal_info_section_from_profile(soup)
+        userid = driver.current_url.split('in/')[1].split('/')[0]
+        name = getting_data_from_a_profile.extracting_from_personal_info_section_from_profile(soup)
 
         num_jobs = []
         num_degrees = []
 
 
-        extracting_from_experience_section_from_profile(soup,driver,all_experience_data,person_num,num_jobs)
-        extracting_from_education_section_from_profile(soup,all_education_data,person_num,num_degrees)
+        getting_data_from_a_profile.extracting_from_experience_section_from_profile(soup, driver, all_experience_data, person_num, num_jobs)
+        getting_data_from_a_profile.extracting_from_education_section_from_profile(soup, all_education_data, person_num, num_degrees)
 
-        for i in range(num_jobs):
+        for i in range(num_jobs[0]):
             names.append(name)
             users_id.append(userid)
 
@@ -293,7 +64,7 @@ def gettingDataFromProfiles():
         names = []
         users_id = []
 
-        for i in range(num_degrees):
+        for i in range(num_degrees[0]):
             names.append(name)
             users_id.append(userid)
 
@@ -306,12 +77,11 @@ def gettingDataFromProfiles():
 
         person_num = person_num + 1
 
-
-
-
         # except:
+        #     print('error: ' + linkedin_url)
 
-            # print('error: ' + linkedin_url)
+
+
 
 
     driver.quit()
@@ -324,7 +94,7 @@ def gettingDataFromProfiles():
 
 
 def main():
-   gettingDataFromProfiles()
+   getting_data_from_profiles()
 
 
 
