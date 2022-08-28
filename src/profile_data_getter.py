@@ -4,13 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
-from selenium.webdriver import Keys
-import lxml
-import pandas
 import datetime
-
-
-
 
 def remove_full_time(text,format_type):
     if len(text.split(' · ')) > 1:
