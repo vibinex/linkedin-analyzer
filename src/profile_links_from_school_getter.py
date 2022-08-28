@@ -11,7 +11,7 @@ import time
 
 
 
-def getting_profile_links_from_school_id(schoolid,driver,urls,loops):
+def getting_profile_links_from_school_id(schoolid,driver,urls):
     filter_src = driver.page_source
     filter_soup = BeautifulSoup(filter_src, 'html.parser')
     filter_urls = filter_soup.find('main', {'id':'main'}).find('ul').find_all('li')
@@ -32,7 +32,7 @@ def getting_links_and_clicking_next_page(schoolid,driver,urls):
     while go:
 
 
-        getting_profile_links_from_school_id(schoolid,driver,urls,loop)
+        getting_profile_links_from_school_id(schoolid,driver,urls)
 
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
@@ -52,7 +52,8 @@ def getting_links_and_clicking_next_page(schoolid,driver,urls):
 
         WebDriverWait(driver,15).until(EC.presence_of_all_elements_located((By.TAG_NAME, "li")))
 
-
+        if pagenumber == 40:
+            break
 
 
 
