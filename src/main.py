@@ -82,8 +82,8 @@ def getting_data_from_profiles():
 
     experience_df = pandas.DataFrame(data=all_experience_data)
     education_df = pandas.DataFrame(data=all_education_data)
-    education_df.to_csv('iitk_education_df40.csv',index = False)
-    experience_df.to_csv('iitk_experience_df40.csv',index = False)
+    education_df.to_csv('iitk_education_df60.csv',index = False)
+    experience_df.to_csv('iitk_experience_df60.csv',index = False)
 
 
 

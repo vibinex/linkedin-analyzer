@@ -72,6 +72,7 @@ def extracting_from_experience_section_from_profile(soup,driver,dict,person_no,n
                 joining_date = date_and_duration.split(' · ')[0]
                 leaving_date = date_and_duration.split(' · ')[0]
             else:
+
                 joining_date = date_and_duration.split(' - ')[0]
                 leaving_date = (date_and_duration.split(' - ')[1]).split(' · ')[0]
 
@@ -94,7 +95,10 @@ def extracting_from_experience_section_from_profile(soup,driver,dict,person_no,n
 
             leaving_date_titles = format_check.find('ul').find_all("span", {'class': 't-14 t-normal t-black--light'})[0]
             leaving_date_temp = leaving_date_titles.find("span", {'class' : 'visually-hidden'}).get_text().strip()
-            leaving_date = (leaving_date_temp.split(' - ')[1]).split(' · ')[0]
+            if len(leaving_date_temp.split(' - ')) == 1:
+                leaving_date = leaving_date_temp.split(' · ')[0]
+            else:
+                leaving_date = (leaving_date_temp.split(' - ')[1]).split(' · ')[0]
             leaving_dates.append(leaving_date)
 
             joining_date_temps = []

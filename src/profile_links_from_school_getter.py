@@ -26,13 +26,15 @@ def getting_links_and_clicking_next_page(schoolid,driver,urls):
 
     driver.get('https://www.linkedin.com/search/results/people/?origin=FACETED_SEARCH&schoolFilter=%5B%22' + str(schoolid) + '%22%5D&sid=(X1')
     WebDriverWait(driver,30).until(EC.presence_of_all_elements_located((By.TAG_NAME, "li")))
-    pagenumber = 0
+
+    page_number = 0
+    starting_page = int(input('What page would you like to start at?\n'))
+    page_amount = int(input('How many pages would you like to scrape?\n'))
     go = True
 
     while go:
-
-
-        getting_profile_links_from_school_id(schoolid,driver,urls)
+        if page_number >= starting_page:
+            getting_profile_links_from_school_id(schoolid,driver,urls)
 
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
@@ -52,7 +54,9 @@ def getting_links_and_clicking_next_page(schoolid,driver,urls):
 
         WebDriverWait(driver,15).until(EC.presence_of_all_elements_located((By.TAG_NAME, "li")))
 
-        if pagenumber == 40:
+        page_number = page_number + 1
+
+        if page_number == (starting_page + page_amount):
             break
 
 
