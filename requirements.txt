@@ -30,6 +30,7 @@ colorama==0.4.5
 commonmark==0.9.1
 configobj==5.0.6
 cryptography==37.0.3
+cycler==0.11.0
 debugpy==1.6.0
 decorator==5.1.1
 defusedxml==0.7.1
@@ -51,6 +52,7 @@ executing==0.8.3
 fastjsonschema==2.15.3
 flatten-dict==0.4.2
 flufl.lock==7.1
+fonttools==4.37.1
 frozenlist==1.3.1
 fsspec==2022.7.1
 funcy==1.17
@@ -81,9 +83,11 @@ jupyter-console==6.4.4
 jupyter-core==4.10.0
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==1.1.1
+kiwisolver==1.4.4
 kombu==5.2.4
 lxml==4.9.0
 MarkupSafe==2.1.1
+matplotlib==3.5.3
 matplotlib-inline==0.1.3
 mistune==0.8.4
 multidict==6.0.2
@@ -105,6 +109,7 @@ parso==0.8.3
 pathspec==0.9.0
 pexpect==4.8.0
 pickleshare==0.7.5
+Pillow==9.2.0
 prometheus-client==0.14.1
 prompt-toolkit==3.0.29
 protobuf==4.21.5
