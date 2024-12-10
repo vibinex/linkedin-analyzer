@@ -51,59 +51,55 @@ export default function Dashboard() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-100 p-8">
-			<div className="max-w-7xl mx-auto">
-				<div className="flex justify-between items-center mb-8">
-					<h1 className="text-3xl font-bold text-gray-900">LinkedIn Sales Analytics</h1>
-					<div className="flex items-center gap-4">
-						<img
-							src={session.user.picture}
-							alt={session.user.name}
-							className="w-8 h-8 rounded-full"
+		<main className="min-h-screen bg-gray-100 p-8 max-w-7xl mx-auto">
+			<header className="flex justify-between items-center mb-8">
+				<h1 className="text-3xl font-bold text-gray-900">LinkedIn Sales Analytics</h1>
+				<div className="flex items-center gap-4">
+					<img
+						src={session.user.picture}
+						alt={session.user.name}
+						className="w-8 h-8 rounded-full"
+					/>
+					<span className="text-gray-700">{session.user.name}</span>
+				</div>
+			</header>
+
+			<section className="bg-white rounded-lg shadow p-6 mb-8">
+				<div className="grid grid-cols-2 gap-4">
+					<div>
+						<label className="block text-sm font-medium text-gray-700">Start Date</label>
+						<input
+							type="date"
+							value={dateRange.start}
+							onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
 						/>
-						<span className="text-gray-700">{session.user.name}</span>
+					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-700">End Date</label>
+						<input
+							type="date"
+							value={dateRange.end}
+							onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+							className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+						/>
 					</div>
 				</div>
+			</section>
 
-				<div className="bg-white rounded-lg shadow p-6 mb-8">
-					<div className="grid grid-cols-2 gap-4 mb-6">
-						<div>
-							<label className="block text-sm font-medium text-gray-700">Start Date</label>
-							<input
-								type="date"
-								value={dateRange.start}
-								onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-								className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-gray-700">End Date</label>
-							<input
-								type="date"
-								value={dateRange.end}
-								onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-								className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-							/>
-						</div>
-					</div>
-				</div>
-
-				<div className="bg-white rounded-lg shadow p-6">
-					<h2 className="text-xl font-semibold mb-4">Connection Funnel</h2>
-					<div className="w-full overflow-x-auto">
-						<BarChart width={600} height={300} data={data}>
-							<CartesianGrid strokeDasharray="3 3" />
-							<XAxis dataKey="name" />
-							<YAxis />
-							<Tooltip />
-							<Legend />
-							<Bar dataKey="Requests Sent" fill="#8884d8" />
-							<Bar dataKey="Accepted Connections" fill="#82ca9d" />
-							<Bar dataKey="Active Conversations" fill="#ffc658" />
-						</BarChart>
-					</div>
-				</div>
-			</div>
-		</div>
+			<section className="bg-white rounded-lg shadow p-6">
+				<h2 className="text-xl font-semibold mb-4">Connection Funnel</h2>
+				<BarChart width={600} height={300} data={data}>
+					<CartesianGrid strokeDasharray="3 3" />
+					<XAxis dataKey="name" />
+					<YAxis />
+					<Tooltip />
+					<Legend />
+					<Bar dataKey="Requests Sent" fill="#8884d8" />
+					<Bar dataKey="Accepted Connections" fill="#82ca9d" />
+					<Bar dataKey="Active Conversations" fill="#ffc658" />
+				</BarChart>
+			</section>
+		</main>
 	);
 }
